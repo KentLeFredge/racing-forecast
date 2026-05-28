@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Racing Forecast – IBOV</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Crimson+Text:ital@1&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #c9aa82;
+  background-image: radial-gradient(ellipse at center, #d4b88e 0%, #b8966a 100%);
+  font-family: 'Oswald', sans-serif;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.page {
+  width: 1280px;
+  background: linear-gradient(160deg, #d8bc90 0%, #c0985e 100%);
+  padding: 28px 55px 36px;
+  position: relative;
+  border: 2px solid #6b3a1f;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+}
+
+/* ── Side ornaments ── */
+.side-ornaments {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: #6b3a1f; opacity: .65; pointer-events: none;
+}
+.side-ornaments.left  { left: 10px; }
+.side-ornaments.right { right: 10px; }
+.orn-big { font-size: 40px; } .orn-sm { font-size: 18px; }
+
+/* ── Deco bar ── */
+.deco-bar { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.deco-bar .line { flex: 1; height: 2px; background: #6b3a1f; }
+.deco-bar .gem  { font-size: 18px; color: #6b3a1f; }
+
+/* ── Header ── */
+.header { text-align: center; margin-bottom: 14px; }
+.header .presents {
+  font-family: 'Crimson Text', serif; font-style: italic;
+  font-size: 22px; color: #5c2e0a; letter-spacing: .5px;
+}
+.header h1 {
+  font-family: 'Oswald', sans-serif; font-size: 74px; font-weight: 700;
+  color: #5c1a00; text-transform: uppercase; letter-spacing: 4px; line-height: 1;
+  text-shadow: 2px 2px 0 rgba(0,0,0,.12);
+}
+.week-label {
+  text-align: center; font-size: 13px; font-weight: 600;
+  color: #5c2e0a; letter-spacing: 3px; text-transform: uppercase;
+  margin-bottom: 14px; opacity: .75;
+}
+
+/* ── Grid ── */
+.grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 13px; padding: 0 28px;
+}
+.grid.cols-1 { grid-template-columns: 1fr; }
+
+/* ── Card ── */
+.card {
+  background: #fff; display: flex; align-items: stretch;
+  min-height: 125px; box-shadow: 2px 3px 8px rgba(0,0,0,.2);
+  border-left: 6px solid #ccc; /* community color applied via JS */
+  overflow: hidden;
+}
+.card-logo {
+  width: 100px; min-width: 100px; background: #f5f3f0;
+  display: flex; align-items: center; justify-content: center;
+  border-right: 1px solid #e8e4de; overflow: hidden;
+}
+.card-logo img {
+  width: 100%; height: 100%; object-fit: contain; padding: 8px;
+}
+.logo-placeholder {
+  width: 72px; height: 72px; background: #e0ddd8; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: #aaa; text-align: center; padding: 4px;
+  font-family: 'Oswald', sans-serif; letter-spacing: 1px;
+}
+.card-info {
+  flex: 1; padding: 12px 16px;
+  display: flex; flex-direction: column; justify-content: center; gap: 5px;
+}
+.community-tag {
+  font-family: 'Oswald', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; opacity: .75;
+  /* color applied via JS */
+}
+.series-name {
+  font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 700;
+  color: #1a1a1a; text-transform: uppercase; line-height: 1.15;
+}
+.event-date {
+  font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600;
+  color: #555; margin-top: 2px;
+}
+.join-link {
+  display: inline-block; margin-top: 4px;
+  font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600;
+  color: #1a5a9a; text-decoration: underline;
+}
+.join-link:hover { color: #0d3a6a; }
+.join-link.no-link { color: #aaa; text-decoration: none; cursor: default; font-style: italic; }
+
+/* ── Status / loader ── */
+.status {
+  grid-column: 1 / -1; text-align: center; padding: 40px;
+  font-size: 16px; color: #5c2e0a; opacity: .7;
+  font-family: 'Crimson Text', serif; font-style: italic;
+}
+
+/* ── Footer ── */
+.footer {
+  text-align: center; margin-top: 16px;
+  font-family: 'Crimson Text', serif; font-style: italic;
+  font-size: 12px; color: #5c2e0a; opacity: .65; letter-spacing: 1px;
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="side-ornaments left">
+    <span class="orn-sm">✦</span><span class="orn-big">&#10625;</span><span class="orn-sm">✦</span>
+  </div>
+  <div class="side-ornaments right">
+    <span class="orn-sm">✦</span><span class="orn-big">&#10625;</span><span class="orn-sm">✦</span>
+  </div>
+
+  <div class="deco-bar">
+    <div class="gem">◆✦</div><div class="line"></div>
+    <div class="gem">◆✦</div><div class="gem">✦◆</div>
+    <div class="line"></div><div class="gem">✦◆</div>
+  </div>
+
+  <div class="header">
+    <div class="presents">International Board of Vintage simracing presents :</div>
+    <h1>Racing Forecast</h1>
+  </div>
+
+  <div class="week-label" id="week-label">Loading…</div>
+
+  <div class="deco-bar" style="margin-bottom:14px">
+    <div class="line"></div><div class="gem" style="font-size:13px">◆</div><div class="line"></div>
+  </div>
+
+  <div class="grid" id="grid">
+    <div class="status">Fetching calendar…</div>
+  </div>
+
+  <div class="deco-bar" style="margin-top:16px">
+    <div class="gem">◆✦</div><div class="line"></div>
+    <div class="gem">◆✦</div><div class="gem">✦◆</div>
+    <div class="line"></div><div class="gem">✦◆</div>
+  </div>
+
+  <div class="footer">International Board of Vintage Simracing &mdash; <span id="year"></span></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  CONFIGURATION
+// ════════════════════════════════════════════════════════
+const SHEET_ID      = '1c4LrE84mqH_sw3yP3IwW6Yq45kI7hyh7G3pFVMihv58';
+const CONFIG_GID    = '1143533875';   // "Config" tab
+
+const CAL_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+const CONFIG_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${CONFIG_GID}`;
+
+const MAX_CARDS       = 6;
+const LOOKAHEAD_WEEKS = 3;
+
+// Calendar column layout (0-indexed start of each month block)
+// Row 2: JANUARY,,,,FEBRUARY,,,,MARCH,,,,APRIL,,,,MAY,,,,JUNE,,,,JULY,,,,,AUGUST,,,,SEPTEMBER,,,,OCTOBER,,,,NOVEMBER,,,,DECEMBER,,
+const MONTH_OFFSETS = [0, 4, 8, 12, 16, 20, 24, 29, 33, 37, 41, 45];
+
+const WEEKDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS   = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
+// ════════════════════════════════════════════════════════
+//  CSV PARSER  (handles quoted multiline cells)
+// ════════════════════════════════════════════════════════
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"' && text[i+1] === '"') { field += '"'; i++; }
+      else if (c === '"') { inQ = false; }
+      else { field += c; }
+    } else {
+      if      (c === '"')  { inQ = true; }
+      else if (c === ',')  { row.push(field.trim()); field = ''; }
+      else if (c === '\n') { row.push(field.trim()); rows.push(row); row = []; field = ''; }
+      else if (c !== '\r') { field += c; }
+    }
+  }
+  if (field || row.length) { row.push(field.trim()); rows.push(row); }
+  return rows;
+}
+
+// ════════════════════════════════════════════════════════
+//  CONFIG PARSER  → Map<keyword_lower, {displayName, color, logoUrl, joinLink}>
+// ════════════════════════════════════════════════════════
+function parseConfig(rows) {
+  // Expected header: Keyword | Display Name | Color | Logo URL | Join Link
+  const map = new Map();
+  for (const row of rows.slice(1)) {          // skip header row
+    if (!row[0]) continue;
+    const keyword     = row[0].trim().toLowerCase();
+    const displayName = (row[1] || '').trim();
+    const color       = (row[2] || '#888888').trim();
+    const logoUrl     = (row[3] || '').trim();
+    const joinLink    = (row[4] || '').trim();
+    map.set(keyword, { displayName, color, logoUrl, joinLink });
+  }
+  return map;
+}
+
+// Match an event string against the config keywords (longest match wins)
+function matchCommunity(eventStr, configMap) {
+  const lower = eventStr.toLowerCase();
+  let best = null, bestLen = 0;
+  for (const [kw, meta] of configMap) {
+    if (lower.includes(kw) && kw.length > bestLen) {
+      best = meta; bestLen = kw.length;
+    }
+  }
+  return best; // null if no match
+}
+
+// ════════════════════════════════════════════════════════
+//  CALENDAR PARSER  → Map<"YYYY-M-D", [eventStr, ...]>
+// ════════════════════════════════════════════════════════
+function extractEvents(rows) {
+  const FR_TO_JS = { LU:1, MA:2, ME:3, JE:4, VE:5, SA:6, DI:0 };
+  const events   = new Map();
+  const today    = new Date();
+  const years    = [today.getFullYear(), today.getFullYear() + 1];
+
+  for (const row of rows.slice(2)) {
+    if (!row.length) continue;
+    for (let mIdx = 0; mIdx < MONTH_OFFSETS.length; mIdx++) {
+      const off      = MONTH_OFFSETS[mIdx];
+      const dayAbbr  = (row[off]     || '');
+      const eventRaw = (row[off + 1] || '');
+      const dayStr   = (row[off + 2] || '');
+      if (!dayAbbr || !dayStr) continue;
+      const dayNum = parseInt(dayStr, 10);
+      if (isNaN(dayNum)) continue;
+
+      // Pick the year whose weekday matches the abbreviation
+      let year = years[0];
+      const jsDay = FR_TO_JS[dayAbbr];
+      if (jsDay !== undefined) {
+        for (const y of years) {
+          if (new Date(y, mIdx, dayNum).getDay() === jsDay) { year = y; break; }
+        }
+      }
+
+      const lines = eventRaw.split('\n').map(s => s.trim()).filter(Boolean);
+      if (!lines.length) continue;
+      const key = `${year}-${mIdx+1}-${dayNum}`;
+      if (!events.has(key)) events.set(key, []);
+      for (const l of lines) events.get(key).push(l);
+    }
+  }
+  return events;
+}
+
+// ════════════════════════════════════════════════════════
+//  DISCORD INVITE → guild icon
+//  Fetches guild metadata from Discord's public invite API
+// ════════════════════════════════════════════════════════
+function extractDiscordCode(url) {
+  if (!url) return null;
+  const m = url.match(/discord(?:app)?\.(?:com\/invite|gg)\/([a-zA-Z0-9-]+)/);
+  return m ? m[1] : null;
+}
+
+async function fetchDiscordIcon(inviteCode) {
+  try {
+    const res  = await fetch(`https://discord.com/api/v10/invites/${inviteCode}?with_counts=false`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const guild = data.guild;
+    if (!guild || !guild.icon) return null;
+    const ext = guild.icon.startsWith('a_') ? 'gif' : 'png';
+    return `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${ext}?size=128`;
+  } catch { return null; }
+}
+
+// Resolve logo URL: explicit URL > Discord invite icon > null
+async function resolveLogoUrl(logoUrl, joinLink) {
+  if (logoUrl) return logoUrl;  // explicit URL wins
+  const code = extractDiscordCode(joinLink);
+  if (code) return await fetchDiscordIcon(code);
+  return null;
+}
+
+// ════════════════════════════════════════════════════════
+//  COLLECT UPCOMING EVENTS
+// ════════════════════════════════════════════════════════
+function getMondayOf(d) {
+  const day = new Date(d);
+  const dow = day.getDay();
+  day.setDate(day.getDate() + (dow === 0 ? -6 : 1 - dow));
+  day.setHours(0,0,0,0);
+  return day;
+}
+
+function collectUpcoming(events, anchor) {
+  const monday  = getMondayOf(anchor);
+  const cutoff  = new Date(monday);
+  cutoff.setDate(cutoff.getDate() + LOOKAHEAD_WEEKS * 7 + 6);
+
+  const results = [];
+  const cur     = new Date(monday);
+  while (cur <= cutoff && results.length < MAX_CARDS) {
+    const key  = `${cur.getFullYear()}-${cur.getMonth()+1}-${cur.getDate()}`;
+    const evts = events.get(key) || [];
+    for (const evt of evts) {
+      if (results.length >= MAX_CARDS) break;
+      results.push({ date: new Date(cur), event: evt });
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+  return results;
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════
+function formatDate(d) {
+  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+}
+
+function weekRangeLabel(cards) {
+  if (!cards.length) return '';
+  const monday   = getMondayOf(cards[0].date);
+  const last     = cards[cards.length - 1].date;
+  const sameMonth = monday.getMonth() === last.getMonth();
+  const from = `${MONTHS[monday.getMonth()]} ${monday.getDate()}`;
+  const to   = sameMonth
+    ? `${last.getDate()}, ${last.getFullYear()}`
+    : `${MONTHS[last.getMonth()]} ${last.getDate()}, ${last.getFullYear()}`;
+  return `${from} – ${to}`;
+}
+
+function buildCardHTML({ date, event }, community, resolvedLogoUrl) {
+  const dateStr = formatDate(date);
+  const color   = community ? community.color : '#888888';
+  const name    = community ? (community.displayName || event) : event;
+  const subname = (community && community.displayName) ? event : '';
+  const link    = community ? community.joinLink : '';
+
+  const logoContent = resolvedLogoUrl
+    ? `<img src="${resolvedLogoUrl}" alt="${name} logo" onerror="this.parentNode.innerHTML='<div class=logo-placeholder>${name.substring(0,6)}</div>'">`
+    : `<div class="logo-placeholder">${name.substring(0,6)}</div>`;
+
+  const linkEl = link
+    ? `<a class="join-link" href="${link}" target="_blank" rel="noopener">Join link</a>`
+    : `<span class="join-link no-link">Join link</span>`;
+
+  const tagEl = community
+    ? `<div class="community-tag" style="color:${color}">${community.displayName}</div>`
+    : '';
+
+  return `
+  <div class="card" style="border-left-color:${color}">
+    <div class="card-logo" style="background:${color}18">${logoContent}</div>
+    <div class="card-info">
+      ${tagEl}
+      <div class="series-name" style="color:${color}">${name}</div>
+      ${subname ? `<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px">${subname}</div>` : ''}
+      <div class="event-date">${dateStr}</div>
+      ${linkEl}
+    </div>
+  </div>`;
+}
+
+async function render(cards, configMap) {
+  const grid = document.getElementById('grid');
+  const lbl  = document.getElementById('week-label');
+
+  if (!cards.length) {
+    grid.innerHTML = '<div class="status">No events found for the coming weeks.</div>';
+    lbl.textContent = 'Upcoming'; return;
+  }
+
+  // Resolve all logos in parallel (Discord API calls)
+  const communities = cards.map(c => matchCommunity(c.event, configMap));
+  const logos = await Promise.all(
+    communities.map(c => resolveLogoUrl(c ? c.logoUrl : '', c ? c.joinLink : ''))
+  );
+
+  grid.className = 'grid' + (cards.length === 1 ? ' cols-1' : '');
+  grid.innerHTML = cards.map((c, i) => buildCardHTML(c, communities[i], logos[i])).join('');
+  lbl.textContent = `Week of ${weekRangeLabel(cards)}`;
+}
+
+// ════════════════════════════════════════════════════════
+//  MAIN  –  fetch both sheets in parallel
+// ════════════════════════════════════════════════════════
+document.getElementById('year').textContent = new Date().getFullYear();
+
+Promise.all([
+  fetch(CAL_URL).then(r => { if (!r.ok) throw new Error(`Calendar: HTTP ${r.status}`); return r.text(); }),
+  fetch(CONFIG_URL).then(r => { if (!r.ok) throw new Error(`Config: HTTP ${r.status}`); return r.text(); }),
+])
+.then(([calCsv, cfgCsv]) => {
+  const calRows   = parseCSV(calCsv);
+  const cfgRows   = parseCSV(cfgCsv);
+  const events    = extractEvents(calRows);
+  const configMap = parseConfig(cfgRows);
+  const cards     = collectUpcoming(events, new Date());
+  render(cards, configMap);
+})
+.catch(err => {
+  console.error(err);
+  document.getElementById('grid').innerHTML =
+    `<div class="status">Could not load data (${err.message}).<br>Make sure the Google Sheet is publicly accessible.</div>`;
+  document.getElementById('week-label').textContent = '—';
+});
+</script>
+</body>
+</html>

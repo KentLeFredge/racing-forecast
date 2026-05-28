@@ -1,0 +1,11 @@
+{
+  "name": "ibov-racing-forecast",
+  "version": "1.0.0",
+  "description": "IBOV Weekly Racing Forecast bulletin",
+  "scripts": {
+    "screenshot": "node screenshot.js"
+  },
+  "dependencies": {
+    "puppeteer": "^22.0.0"
+  }
+}
