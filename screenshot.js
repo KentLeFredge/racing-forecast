@@ -1,57 +1,34 @@
-/**
- * screenshot.js
- * Opens the hosted bulletin in a headless browser,
- * waits for the Google Sheets data to load, and saves a screenshot.
- *
- * Run by GitHub Actions — do not edit the OUTPUT_FILE path.
- */
+name: Weekly Racing Forecast
 
-const puppeteer = require('puppeteer');
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
 
-// URL of the bulletin hosted on GitHub Pages
-// Replace with your actual GitHub Pages URL once the repo is published
-const BULLETIN_URL = process.env.BULLETIN_URL || 'https://YOUR-USERNAME.github.io/racing-forecast/bulletin.html';
-const OUTPUT_FILE  = 'bulletin_screenshot.png';
+jobs:
+  screenshot-and-post:
+    runs-on: ubuntu-latest
 
-(async () => {
-  const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-  const page = await browser.newPage();
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-  // Match the bulletin's design width
-  await page.setViewport({ width: 1340, height: 900, deviceScaleFactor: 2 });
+      - name: Install Puppeteer
+        run: npm install puppeteer
 
-  console.log(`Opening ${BULLETIN_URL} …`);
-  await page.goto(BULLETIN_URL, { waitUntil: 'networkidle0', timeout: 30000 });
+      - name: Take screenshot of bulletin
+        run: node screenshot.js
 
-  // Wait until the grid is populated (data loaded from Google Sheets)
-  await page.waitForFunction(
-    () => {
-      const grid = document.getElementById('grid');
-      return grid && !grid.querySelector('.status');
-    },
-    { timeout: 20000 }
-  );
-
-  // Extra wait for images (logos) to finish loading
-  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 2000)));
-
-  // Clip to the .page element only (no body background overflow)
-  const pageEl = await page.$('.page');
-  const box    = await pageEl.boundingBox();
-
-  await page.screenshot({
-    path: OUTPUT_FILE,
-    clip: {
-      x:      Math.floor(box.x),
-      y:      Math.floor(box.y),
-      width:  Math.ceil(box.width),
-      height: Math.ceil(box.height),
-    }
-  });
-
-  console.log(`Screenshot saved → ${OUTPUT_FILE}`);
-  await browser.close();
-})();
+      - name: Post to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          WEEK=$(date '+%B %d, %Y')
+          curl -X POST "$DISCORD_WEBHOOK" \
+            -F "file=@bulletin_screenshot.png" \
+            -F "payload_json={\"content\":\"📅 **Racing Forecast** — Week of $WEEK\"}"
